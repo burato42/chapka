@@ -5,7 +5,6 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from ollama import Client, ChatResponse
-import httpx
 
 from log import logger
 
@@ -19,14 +18,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+# TODO: Use async client
 client = Client(
   host='http://localhost:11434',
 )
 sessions: dict[int, list[dict[str, str]]] = {}
-
-
-class SimpleChatRequest(BaseModel):
-    message: str
 
 
 class ChatRequest(BaseModel):
@@ -64,23 +61,15 @@ async def chat_with_model(request: ChatRequest):
         raise HTTPException(status_code=500, detail=f"Ollama error: {e}")
 
 
-@app.post("/simple-chat")
-async def chat_with_model(request: ChatRequest):
-    ollama_url = "http://localhost:11434/api/generate"
-    model = "llama3.2:3b"
-    
-    payload = {
-        "model": model,
-        "prompt": request.message,
-        "stream": False
-    }
-
-    try:
-        response = httpx.post(ollama_url, json=payload)
-        response.raise_for_status()
-        return response.json()
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Ollama error: {str(e)}")
+@app.get("/sessions")
+async def get_sessions():
+    history = []
+    for session_id in sessions:
+        history.append({
+            "session_id": session_id,
+            "prompt": sessions[session_id][0]["content"]
+        })
+    return history
 
 
 if __name__ == "__main__":
