@@ -14,6 +14,7 @@ export default function ChatApp() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -35,12 +36,15 @@ export default function ChatApp() {
     }
   };
 
-  const handleSendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSendMessage = async (e?: React.InputEvent) => {
+    if (e) e.preventDefault();
     if (!input.trim()) return;
 
     const userMessage = input.trim();
     setInput("");
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+    }
 
     // Add user message to UI
     setMessages((prev) => [...prev, { role: "user", content: userMessage }]);
@@ -141,8 +145,8 @@ export default function ChatApp() {
             >
               <div
                 className={`max-w-[80%] md:max-w-[70%] rounded-2xl px-5 py-3.5 ${msg.role === "user"
-                    ? "bg-blue-600 text-white rounded-br-sm shadow-md"
-                    : "bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 rounded-bl-sm border border-zinc-200 dark:border-zinc-700 shadow-sm"
+                  ? "bg-blue-600 text-white rounded-br-sm shadow-md"
+                  : "bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 rounded-bl-sm border border-zinc-200 dark:border-zinc-700 shadow-sm"
                   }`}
               >
                 <div className="prose prose-sm md:prose-base dark:prose-invert max-w-none whitespace-pre-wrap leading-relaxed">
@@ -172,13 +176,26 @@ export default function ChatApp() {
             onSubmit={handleSendMessage}
             className="flex-1 flex gap-2 border border-zinc-300 dark:border-zinc-700 rounded-2xl bg-zinc-50 dark:bg-zinc-950 p-1 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-transparent transition"
           >
-            <input
-              type="text"
+            <textarea
+              ref={textareaRef}
               value={input}
-              onChange={(e) => setInput(e.target.value)}
+              onChange={(e) => {
+                setInput(e.target.value);
+                e.target.style.height = "auto";
+                e.target.style.height = `${e.target.scrollHeight}px`;
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  if (!isLoading && input.trim()) {
+                    handleSendMessage();
+                  }
+                }
+              }}
               placeholder="Type your message..."
               disabled={isLoading}
-              className="flex-1 bg-transparent px-4 py-3 outline-none text-zinc-800 dark:text-zinc-200 disabled:opacity-50"
+              rows={1}
+              className="flex-1 bg-transparent px-4 py-3 outline-none text-zinc-800 dark:text-zinc-200 disabled:opacity-50 resize-none max-h-40 overflow-y-auto"
             />
             <button
               type="submit"
