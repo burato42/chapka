@@ -72,6 +72,13 @@ async def get_sessions():
     return history
 
 
+@app.get("/sessions/{session_id}")
+async def get_session(session_id: int):
+    if session_id not in sessions:
+        raise HTTPException(status_code=404, detail="Session not found")
+    return sessions[session_id]   
+
+
 if __name__ == "__main__":
     import uvicorn
 

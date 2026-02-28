@@ -33,6 +33,21 @@ export default function ChatApp() {
     fetchHistory();
   }, [sessionId, messages.length]); // refetch when session or messages change
 
+  const fetchSessionMessages = async (id: number) => {
+    try {
+      const res = await fetch(`http://localhost:8000/sessions/${id}`);
+      if (res.ok) {
+        const data = await res.json();
+        setMessages(data);
+      } else {
+        setMessages([]);
+      }
+    } catch (e) {
+      console.error("Failed to fetch session messages", e);
+      setMessages([]);
+    }
+  };
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -46,7 +61,7 @@ export default function ChatApp() {
     const id = parseInt(inputSessionId);
     if (!isNaN(id) && id > 0) {
       setSessionId(id);
-      setMessages([]); // Clear local messages, since we re-join
+      fetchSessionMessages(id);
     } else {
       setSessionId(0);
       setMessages([]);
@@ -160,11 +175,12 @@ export default function ChatApp() {
                 key={hItem.session_id}
                 onClick={() => {
                   setSessionId(hItem.session_id);
-                  setMessages([]); // Clears until we fetch if we wanted. For now just reset.
+                  setInputSessionId(hItem.session_id.toString());
+                  fetchSessionMessages(hItem.session_id);
                 }}
                 className={`w-full text-left p-3 mb-1 rounded-xl text-sm transition-colors ${sessionId === hItem.session_id
-                    ? "bg-blue-100 text-blue-900 outline-none ring-2 ring-blue-500" // Note: updated color to be more visible, wait dark mode
-                    : "text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800"
+                  ? "bg-blue-100 text-blue-900 outline-none ring-2 ring-blue-500" // Note: updated color to be more visible, wait dark mode
+                  : "text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800"
                   }`}
               >
                 <div className="font-semibold text-xs mb-1 opacity-70">
