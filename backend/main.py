@@ -2,6 +2,7 @@ import json
 import random
 
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from ollama import Client, ChatResponse
 import httpx
@@ -9,6 +10,14 @@ import httpx
 from log import logger
 
 app = FastAPI(title="Chapka backend")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 client = Client(
   host='http://localhost:11434',
