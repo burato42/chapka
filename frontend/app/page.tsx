@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 
 type Message = {
   role: "user" | "assistant";
@@ -24,7 +24,7 @@ export default function ChatApp() {
     scrollToBottom();
   }, [messages, isLoading]);
 
-  const handleJoinSession = (e: React.FormEvent) => {
+  const handleJoinSession = (e: React.SubmitEvent) => {
     e.preventDefault();
     const id = parseInt(inputSessionId);
     if (!isNaN(id) && id > 0) {
@@ -36,7 +36,7 @@ export default function ChatApp() {
     }
   };
 
-  const handleSendMessage = async (e?: React.InputEvent) => {
+  const handleSendMessage = async (e?: React.SubmitEvent) => {
     if (e) e.preventDefault();
     if (!input.trim()) return;
 
@@ -87,6 +87,42 @@ export default function ChatApp() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+
+  const [height, setHeight] = useState(100); // Initial height in px
+  const isResizing = useRef(false);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isResizing.current) return;
+      // Calculate height from the bottom of the viewport
+      const newHeight = window.innerHeight - e.clientY;
+      if (newHeight >= 80 && newHeight <= 600) {
+        setHeight(newHeight);
+      }
+    };
+
+    const handleMouseUp = () => {
+      if (isResizing.current) {
+        isResizing.current = false;
+        document.body.style.cursor = "default";
+      }
+    };
+
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, []);
+
+  const startResizing = (e: React.MouseEvent) => {
+    e.preventDefault();
+    isResizing.current = true;
+    document.body.style.cursor = "ns-resize";
   };
 
   return (
@@ -170,8 +206,16 @@ export default function ChatApp() {
       </main>
 
       {/* Input Area */}
-      <footer className="bg-white dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-800 p-4">
-        <div className="max-w-4xl mx-auto flex items-end gap-2">
+      <footer
+        className="bg-white dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-800 p-4 relative flex flex-col"
+        style={{ height: `${height}px` }}
+      >
+        {/* Resize Handle */}
+        <div
+          onMouseDown={startResizing}
+          className="absolute top-0 left-0 right-0 h-2 -translate-y-1 cursor-ns-resize z-10"
+        />
+        <div className="max-w-4xl w-full mx-auto flex items-stretch gap-2 flex-1">
           <form
             onSubmit={handleSendMessage}
             className="flex-1 flex gap-2 border border-zinc-300 dark:border-zinc-700 rounded-2xl bg-zinc-50 dark:bg-zinc-950 p-1 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-transparent transition"
@@ -179,11 +223,7 @@ export default function ChatApp() {
             <textarea
               ref={textareaRef}
               value={input}
-              onChange={(e) => {
-                setInput(e.target.value);
-                e.target.style.height = "auto";
-                e.target.style.height = `${e.target.scrollHeight}px`;
-              }}
+              onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault();
@@ -194,8 +234,7 @@ export default function ChatApp() {
               }}
               placeholder="Type your message..."
               disabled={isLoading}
-              rows={1}
-              className="flex-1 bg-transparent px-4 py-3 outline-none text-zinc-800 dark:text-zinc-200 disabled:opacity-50 resize-none max-h-40 overflow-y-auto"
+              className="flex-1 bg-transparent px-4 py-3 outline-none text-zinc-800 dark:text-zinc-200 disabled:opacity-50 resize-none h-full overflow-y-auto"
             />
             <button
               type="submit"
