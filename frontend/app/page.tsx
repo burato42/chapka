@@ -216,14 +216,11 @@ export default function ChatApp() {
           <div className="chat-content">
             {messages.length === 0 ? (
               <div className="flex flex-col items-center justify-center flex-1 text-center space-y-4">
-                <div className="w-16 h-16 rounded-2xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 text-3xl">
-                  👋
-                </div>
                 <h2 className="text-2xl font-semibold text-zinc-700 dark:text-zinc-300">
                   Welcome to Chapka
                 </h2>
                 <p className="text-zinc-500 dark:text-zinc-400 max-w-sm">
-                  Send a message to start a new session, or enter an existing Session ID in the top right to continue.
+                  Send a message to start a new session, or continue an existing one chosing from the history.
                 </p>
               </div>
             ) : (
@@ -262,7 +259,7 @@ export default function ChatApp() {
 
         {/* Input Area */}
         <footer
-          className="bg-white dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-800 p-4 relative flex flex-col"
+          className="bg-white dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-800 relative flex flex-col"
           style={{ height: `${height}px` }}
         >
           {/* Resize Handle */}
@@ -270,8 +267,9 @@ export default function ChatApp() {
             onMouseDown={startResizing}
             className="absolute top-0 left-0 right-0 h-2 -translate-y-1 cursor-ns-resize z-10"
           />
-          <div className="max-w-4xl w-full mx-auto flex items-stretch gap-2 flex-1">
+          <div className="max-w-4xl w-full mx-auto flex items-stretch gap-2 flex-1 py-4">
             <form
+              id="chat-form"
               onSubmit={handleSendMessage}
               className="flex-1 flex gap-2 border border-zinc-300 dark:border-zinc-700 rounded-2xl bg-zinc-50 dark:bg-zinc-950 p-1 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-transparent transition"
             >
@@ -291,14 +289,16 @@ export default function ChatApp() {
                 disabled={isLoading}
                 className="flex-1 bg-transparent px-4 py-3 outline-none text-zinc-800 dark:text-zinc-200 disabled:opacity-50 resize-none h-full overflow-y-auto"
               />
-              <button
-                type="submit"
-                disabled={!input.trim() || isLoading}
-                className="px-4 py-2 m-1 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:hover:bg-blue-600 transition flex items-center justify-center font-medium shadow-sm font-sans"
-              >
-                Send
-              </button>
+
             </form>
+            <button
+              type="submit"
+              form="chat-form"
+              disabled={!input.trim() || isLoading}
+              className="px-4 py-2 m-1 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:hover:bg-blue-600 transition flex items-center justify-center font-medium shadow-sm font-sans self-center"
+            >
+              Send
+            </button>
           </div>
         </footer>
       </div>
