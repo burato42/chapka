@@ -2,6 +2,8 @@
 
 import React, { useState, useRef, useEffect } from "react";
 
+const BACKEND_URL = "http://localhost:8000";
+
 type Message = {
   role: "user" | "assistant";
   content: string;
@@ -19,7 +21,7 @@ export default function ChatApp() {
 
   const fetchHistory = async () => {
     try {
-      const res = await fetch("http://localhost:8000/sessions");
+      const res = await fetch(`${BACKEND_URL}/sessions`);
       if (res.ok) {
         const data = await res.json();
         setHistory(data);
@@ -35,7 +37,7 @@ export default function ChatApp() {
 
   const fetchSessionMessages = async (id: number) => {
     try {
-      const res = await fetch(`http://localhost:8000/sessions/${id}`);
+      const res = await fetch(`${BACKEND_URL}/sessions/${id}`);
       if (res.ok) {
         const data = await res.json();
         setMessages(data);
@@ -58,14 +60,8 @@ export default function ChatApp() {
 
   const handleJoinSession = (e: React.SubmitEvent) => {
     e.preventDefault();
-    const id = parseInt(inputSessionId);
-    if (!isNaN(id) && id > 0) {
-      setSessionId(id);
-      fetchSessionMessages(id);
-    } else {
-      setSessionId(0);
-      setMessages([]);
-    }
+    setSessionId(0);
+    setMessages([]);
   };
 
   const handleSendMessage = async (e?: React.SubmitEvent) => {
@@ -78,12 +74,12 @@ export default function ChatApp() {
       textareaRef.current.style.height = "auto";
     }
 
-    // Add user message to UI
+
     setMessages((prev) => [...prev, { role: "user", content: userMessage }]);
     setIsLoading(true);
 
     try {
-      const response = await fetch("http://localhost:8000/chat", {
+      const response = await fetch(`${BACKEND_URL}/chat`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -100,12 +96,10 @@ export default function ChatApp() {
 
       const data = await response.json();
 
-      // Update session ID if it was newly created
       if (sessionId === 0 && data.session_id) {
         setSessionId(data.session_id);
       }
 
-      // Add assistant response
       setMessages((prev) => [
         ...prev,
         { role: "assistant", content: data.response },
@@ -122,13 +116,12 @@ export default function ChatApp() {
   };
 
 
-  const [height, setHeight] = useState(100); // Initial height in px
+  const [height, setHeight] = useState(100);
   const isResizing = useRef(false);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (!isResizing.current) return;
-      // Calculate height from the bottom of the viewport
       const newHeight = window.innerHeight - e.clientY;
       if (newHeight >= 80 && newHeight <= 600) {
         setHeight(newHeight);
@@ -161,11 +154,13 @@ export default function ChatApp() {
     <div className="flex h-screen bg-zinc-50 dark:bg-zinc-950 font-sans">
       {/* Sidebar for History */}
       <aside className="w-64 bg-zinc-100 dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800 flex flex-col h-full overflow-hidden">
-        <div className="p-4 border-b border-zinc-200 dark:border-zinc-800">
-          <h2 className="text-sm font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider">
-            Saved Sessions
-          </h2>
-        </div>
+        <header className="header-container bg-zinc-100">
+          <div className="flex h-8 items-center gap-3">
+            <h2 className="text-sm font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider">
+              Existing Sessions
+            </h2>
+          </div>
+        </header>
         <div className="flex-1 overflow-y-auto p-2">
           {history.length === 0 ? (
             <div className="p-4 text-center text-sm text-zinc-500">No sessions yet</div>
@@ -179,7 +174,7 @@ export default function ChatApp() {
                   fetchSessionMessages(hItem.session_id);
                 }}
                 className={`w-full text-left p-3 mb-1 rounded-xl text-sm transition-colors ${sessionId === hItem.session_id
-                  ? "bg-blue-100 text-blue-900 outline-none ring-2 ring-blue-500" // Note: updated color to be more visible, wait dark mode
+                  ? "bg-blue-100 text-blue-900 outline-none ring-2 ring-blue-500"
                   : "text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800"
                   }`}
               >
@@ -208,70 +203,61 @@ export default function ChatApp() {
           </div>
 
           <form onSubmit={handleJoinSession} className="flex items-center gap-2">
-            <div className="text-sm text-zinc-500 dark:text-zinc-400 font-medium">
-              {sessionId === 0 ? "New Session" : `Session ID: ${sessionId}`}
-            </div>
-            <input
-              type="text"
-              placeholder="Enter ID to join..."
-              value={inputSessionId}
-              onChange={(e) => setInputSessionId(e.target.value)}
-              className="px-3 py-1.5 text-sm bg-zinc-100 dark:bg-zinc-800 border-none rounded-md focus:ring-2 focus:ring-blue-500 outline-none text-zinc-800 dark:text-zinc-200 w-32"
-            />
             <button
               type="submit"
               className="px-3 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition"
             >
-              {inputSessionId ? "Join" : "Reset"}
+              New Chat
             </button>
           </form>
         </header>
-
         {/* Main Chat Area */}
         <main className="main-container">
-          {messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
-              <div className="w-16 h-16 rounded-2xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 text-3xl">
-                👋
+          <div className="chat-content">
+            {messages.length === 0 ? (
+              <div className="flex flex-col items-center justify-center flex-1 text-center space-y-4">
+                <div className="w-16 h-16 rounded-2xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 text-3xl">
+                  👋
+                </div>
+                <h2 className="text-2xl font-semibold text-zinc-700 dark:text-zinc-300">
+                  Welcome to Chapka
+                </h2>
+                <p className="text-zinc-500 dark:text-zinc-400 max-w-sm">
+                  Send a message to start a new session, or enter an existing Session ID in the top right to continue.
+                </p>
               </div>
-              <h2 className="text-2xl font-semibold text-zinc-700 dark:text-zinc-300">
-                Welcome to Chapka
-              </h2>
-              <p className="text-zinc-500 dark:text-zinc-400 max-w-sm">
-                Send a message to start a new session, or enter an existing Session ID in the top right to continue.
-              </p>
-            </div>
-          ) : (
-            messages.map((msg, idx) => (
-              <div
-                key={idx}
-                className={`flex w-full ${msg.role === "user" ? "justify-end" : "justify-start"
-                  }`}
-              >
+            ) : (
+              messages.map((msg, idx) => (
                 <div
-                  className={`max-w-[80%] md:max-w-[70%] rounded-2xl px-5 py-3.5 ${msg.role === "user"
-                    ? "bg-blue-600 text-white rounded-br-sm shadow-md"
-                    : "bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 rounded-bl-sm border border-zinc-200 dark:border-zinc-700 shadow-sm"
+                  key={idx}
+                  className={`flex w-full ${msg.role === "user" ? "justify-end" : "justify-start"
                     }`}
                 >
-                  <div className="prose prose-sm md:prose-base dark:prose-invert max-w-none whitespace-pre-wrap leading-relaxed">
-                    {msg.content}
+                  <div
+                    className={`max-w-[80%] md:max-w-[70%] rounded-2xl px-5 py-3.5 ${msg.role === "user"
+                      ? "bg-blue-600 text-white rounded-br-sm shadow-md"
+                      : "bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 rounded-bl-sm border border-zinc-200 dark:border-zinc-700 shadow-sm"
+                      }`}
+                  >
+                    <div className="prose prose-sm md:prose-base dark:prose-invert max-w-none whitespace-pre-wrap leading-relaxed">
+                      {msg.content}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))
-          )}
+              ))
+            )}
 
-          {isLoading && (
-            <div className="flex w-full justify-start">
-              <div className="bg-white dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 rounded-2xl rounded-bl-sm border border-zinc-200 dark:border-zinc-700 px-5 py-4 shadow-sm flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-zinc-400 animate-bounce" style={{ animationDelay: "0ms" }}></div>
-                <div className="w-2 h-2 rounded-full bg-zinc-400 animate-bounce" style={{ animationDelay: "150ms" }}></div>
-                <div className="w-2 h-2 rounded-full bg-zinc-400 animate-bounce" style={{ animationDelay: "300ms" }}></div>
+            {isLoading && (
+              <div className="flex w-full justify-start">
+                <div className="bg-white dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 rounded-2xl rounded-bl-sm border border-zinc-200 dark:border-zinc-700 px-5 py-4 shadow-sm flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-zinc-400 animate-bounce" style={{ animationDelay: "0ms" }}></div>
+                  <div className="w-2 h-2 rounded-full bg-zinc-400 animate-bounce" style={{ animationDelay: "150ms" }}></div>
+                  <div className="w-2 h-2 rounded-full bg-zinc-400 animate-bounce" style={{ animationDelay: "300ms" }}></div>
+                </div>
               </div>
-            </div>
-          )}
-          <div ref={messagesEndRef} />
+            )}
+            <div ref={messagesEndRef} />
+          </div>
         </main>
 
         {/* Input Area */}

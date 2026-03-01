@@ -27,7 +27,11 @@ body {
 
 @layer components {
   .main-container {
-    @apply flex-1 overflow-y-auto w-full max-w-4xl mx-auto p-4 md:p-6 space-y-6;
+    @apply flex-1 overflow-y-auto w-full relative;
+  }
+
+  .chat-content {
+    @apply w-full max-w-4xl mx-auto p-4 md:p-6 space-y-6 min-h-full flex flex-col m-auto;
   }
 }
 
