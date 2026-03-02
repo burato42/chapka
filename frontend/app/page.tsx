@@ -240,7 +240,7 @@ export default function ChatApp() {
 
             {isLoading && (
               <div className="flex w-full justify-start">
-                <div className="typing-bubble">
+                <div className="typing-bubble" data-testid="typing-bubble">
                   <div className="typing-dot" style={{ animationDelay: "0ms" }}></div>
                   <div className="typing-dot" style={{ animationDelay: "150ms" }}></div>
                   <div className="typing-dot" style={{ animationDelay: "300ms" }}></div>
