@@ -1,14 +1,18 @@
 import json
+import os
 import random
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-from ollama import Client, ChatResponse
-
+from ollama import AsyncClient, ChatResponse
+from data_models import ChatRequest, InternalChatResponse, Session, SessionTitle
 from log import logger
 
+MODEL = "llama3.2:3b"
+
+
 app = FastAPI(title="Chapka backend")
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -19,24 +23,22 @@ app.add_middleware(
 )
 
 
-# TODO: Use async client
-client = Client(
-  host='http://localhost:11434',
+client = AsyncClient(
+  host=os.getenv("OLLAMA_HOST", "http://localhost:11434"),
 )
+
 sessions: dict[int, list[dict[str, str]]] = {}
 
 
-class ChatRequest(BaseModel):
-    session_id: int = 0
-    message: str
-
-
-@app.post("/chat")
+@app.post("/chat",
+    response_model=InternalChatResponse,
+)
 async def chat_with_model(request: ChatRequest):
-    model = "llama3.2:3b"
 
     session_id = request.session_id
     if request.session_id == 0:
+         # TODO: use uuid or other unique id, this approach is not correct,
+         #       it's kept for demonstation purposes only
         session_id = random.randrange(1000)
 
     if session_id not in sessions:
@@ -47,7 +49,7 @@ async def chat_with_model(request: ChatRequest):
     logger.debug("Messages: {}", sessions[session_id])
 
     try:
-        response: ChatResponse = client.chat(model=model, messages=sessions[session_id])       
+        response: ChatResponse = await client.chat(model=MODEL, messages=sessions[session_id])       
         llm_message = response.message
 
         sessions[session_id].append(json.loads(llm_message.model_dump_json()))
@@ -61,7 +63,9 @@ async def chat_with_model(request: ChatRequest):
         raise HTTPException(status_code=500, detail=f"Ollama error: {e}")
 
 
-@app.get("/sessions")
+@app.get("/sessions",
+    response_model=list[Session],
+)
 async def get_sessions():
     history = []
     for session_id in sessions:
@@ -72,7 +76,10 @@ async def get_sessions():
     return history
 
 
-@app.get("/sessions/{session_id}")
+@app.get(
+    "/sessions/{session_id}", 
+    response_model=SessionTitle
+)
 async def get_session(session_id: int):
     if session_id not in sessions:
         raise HTTPException(status_code=404, detail="Session not found")

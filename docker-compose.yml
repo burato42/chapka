@@ -1,0 +1,46 @@
+services:
+  ollama:
+    image: ollama/ollama:latest
+    # Security options are required for Ollama to run on M-series Macs
+    security_opt:
+      - seccomp:unconfined
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    restart: unless-stopped
+
+  # This is neccessary for the model to be pulled
+  ollama-pull-model:
+    image: ollama/ollama:latest
+    security_opt:
+      - seccomp:unconfined
+    container_name: ollama_pull_model
+    volumes:
+      - ollama_data:/root/.ollama
+    entrypoint: /bin/sh -c "ollama serve & sleep 5 && ollama pull llama3.2:3b"
+    depends_on:
+      - ollama
+      
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+    depends_on:
+      - ollama
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  ollama_data:
