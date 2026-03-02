@@ -1,3 +1,6 @@
+from pydantic import BaseModel
+
+
 class ChatRequest(BaseModel):
     session_id: int = 0
     message: str
@@ -14,9 +17,9 @@ class ChatMessage(BaseModel):
     content: str
 
 
-class Session(BaseModel):
+class Sessions(BaseModel):
     session_id: int
-    prompt: ChatMessage
+    messages: list[ChatMessage]
 
 
 class SessionTitle(BaseModel):
