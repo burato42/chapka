@@ -20,3 +20,8 @@ build-backend = "setuptools.build_meta"
 where = ["."]
 include = ["brainbay*"]
 
+[dependency-groups]
+dev = [
+    "pytest>=9.0.2",
+]
+
