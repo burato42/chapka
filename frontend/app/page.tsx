@@ -205,7 +205,7 @@ export default function ChatApp() {
           <form onSubmit={handleJoinSession} className="flex items-center gap-2">
             <button
               type="submit"
-              className="px-3 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition"
+              className="btn-primary-sm"
             >
               New Chat
             </button>
@@ -227,16 +227,10 @@ export default function ChatApp() {
               messages.map((msg, idx) => (
                 <div
                   key={idx}
-                  className={`flex w-full ${msg.role === "user" ? "justify-end" : "justify-start"
-                    }`}
+                  className={`flex w-full ${msg.role === "user" ? "justify-end" : "justify-start"}`}
                 >
-                  <div
-                    className={`max-w-[80%] md:max-w-[70%] rounded-2xl px-5 py-3.5 ${msg.role === "user"
-                      ? "bg-blue-600 text-white rounded-br-sm shadow-md"
-                      : "bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 rounded-bl-sm border border-zinc-200 dark:border-zinc-700 shadow-sm"
-                      }`}
-                  >
-                    <div className="prose prose-sm md:prose-base dark:prose-invert max-w-none whitespace-pre-wrap leading-relaxed">
+                  <div className={msg.role === "user" ? "message-bubble-user" : "message-bubble-assistant"}>
+                    <div className="message-content prose prose-sm md:prose-base dark:prose-invert">
                       {msg.content}
                     </div>
                   </div>
@@ -246,10 +240,10 @@ export default function ChatApp() {
 
             {isLoading && (
               <div className="flex w-full justify-start">
-                <div className="bg-white dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 rounded-2xl rounded-bl-sm border border-zinc-200 dark:border-zinc-700 px-5 py-4 shadow-sm flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-zinc-400 animate-bounce" style={{ animationDelay: "0ms" }}></div>
-                  <div className="w-2 h-2 rounded-full bg-zinc-400 animate-bounce" style={{ animationDelay: "150ms" }}></div>
-                  <div className="w-2 h-2 rounded-full bg-zinc-400 animate-bounce" style={{ animationDelay: "300ms" }}></div>
+                <div className="typing-bubble">
+                  <div className="typing-dot" style={{ animationDelay: "0ms" }}></div>
+                  <div className="typing-dot" style={{ animationDelay: "150ms" }}></div>
+                  <div className="typing-dot" style={{ animationDelay: "300ms" }}></div>
                 </div>
               </div>
             )}
@@ -271,7 +265,7 @@ export default function ChatApp() {
             <form
               id="chat-form"
               onSubmit={handleSendMessage}
-              className="flex-1 flex gap-2 border border-zinc-300 dark:border-zinc-700 rounded-2xl bg-zinc-50 dark:bg-zinc-950 p-1 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-transparent transition"
+              className="chat-input-form"
             >
               <textarea
                 ref={textareaRef}
@@ -287,15 +281,14 @@ export default function ChatApp() {
                 }}
                 placeholder="Type your message..."
                 disabled={isLoading}
-                className="flex-1 bg-transparent px-4 py-3 outline-none text-zinc-800 dark:text-zinc-200 disabled:opacity-50 resize-none h-full overflow-y-auto"
+                className="chat-textarea"
               />
-
             </form>
             <button
               type="submit"
               form="chat-form"
               disabled={!input.trim() || isLoading}
-              className="px-4 py-2 m-1 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:hover:bg-blue-600 transition flex items-center justify-center font-medium shadow-sm font-sans self-center"
+              className="btn-send"
             >
               Send
             </button>
