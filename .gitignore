@@ -1,6 +1,8 @@
 .venv
 .idea
 __pycache__/
+brainbay.egg-info/
+.ruff_cache/
 
 
 

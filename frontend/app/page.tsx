@@ -40,7 +40,7 @@ export default function ChatApp() {
       const res = await fetch(`${BACKEND_URL}/sessions/${id}`);
       if (res.ok) {
         const data = await res.json();
-        setMessages(data);
+        setMessages(data.messages);
       } else {
         setMessages([]);
       }
