@@ -4,7 +4,7 @@ import random
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from ollama import AsyncClient, ChatResponse
+from ollama import Client, ChatResponse
 from data_models import ChatRequest, InternalChatResponse, Sessions, SessionTitle
 from log import logger
 
@@ -22,8 +22,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
-client = AsyncClient(
+# FIXME: Here should be AsyncClient but it doesn't work in Docker
+client = Client(
     host=os.getenv("OLLAMA_HOST", "http://localhost:11434"),
 )
 
@@ -50,7 +50,9 @@ async def chat_with_model(request: ChatRequest):
     logger.debug("Messages: {}", sessions[session_id])
 
     try:
-        response: ChatResponse = await client.chat(
+        # TODO: It's wrong in general: We should not use synchronous call in async function
+        #       We need it while the issue with Docker and AsyncClient is not resolved
+        response: ChatResponse = client.chat(
             model=MODEL, messages=sessions[session_id]
         )
         llm_message = response.message

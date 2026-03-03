@@ -4,7 +4,7 @@ Ollama's AsyncClient is mocked so tests run without a live LLM.
 """
 
 import pytest
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import MagicMock
 from fastapi.testclient import TestClient
 
 import main as app_module
@@ -43,7 +43,7 @@ class TestChat:
         monkeypatch.setattr(
             app_module.client,
             "chat",
-            AsyncMock(return_value=mock_response),
+            MagicMock(return_value=mock_response),
         )
 
         resp = client.post("/chat", json={"session_id": 0, "message": "Hi"})
@@ -60,7 +60,7 @@ class TestChat:
         monkeypatch.setattr(
             app_module.client,
             "chat",
-            AsyncMock(return_value=mock_response),
+            MagicMock(return_value=mock_response),
         )
 
         app_module.sessions[42] = [{"role": "user", "content": "first"}]
@@ -77,7 +77,7 @@ class TestChat:
         monkeypatch.setattr(
             app_module.client,
             "chat",
-            AsyncMock(side_effect=RuntimeError("connection refused")),
+            MagicMock(side_effect=RuntimeError("connection refused")),
         )
 
         resp = client.post("/chat", json={"session_id": 0, "message": "Hello"})
