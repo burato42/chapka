@@ -7,21 +7,22 @@ import pytest
 from unittest.mock import MagicMock
 from fastapi.testclient import TestClient
 
-import main as app_module
-from main import app
+from app.storage import sessions
+from app.client import client as chat_client
+from app.main import chat_app
 
 
 @pytest.fixture(autouse=True)
 def reset_sessions():
     """Ensure the in-memory sessions dict is empty before every test."""
-    app_module.sessions.clear()
+    sessions.clear()
     yield
-    app_module.sessions.clear()
+    sessions.clear()
 
 
 @pytest.fixture()
 def client():
-    return TestClient(app)
+    return TestClient(chat_app)
 
 
 def _make_ollama_response(content: str):
@@ -41,7 +42,7 @@ class TestChat:
         """A new session is created when session_id == 0."""
         mock_response = _make_ollama_response("Hello!")
         monkeypatch.setattr(
-            app_module.client,
+            chat_client,
             "chat",
             MagicMock(return_value=mock_response),
         )
@@ -58,12 +59,12 @@ class TestChat:
         """Sending to an existing session_id appends to its history."""
         mock_response = _make_ollama_response("Sure!")
         monkeypatch.setattr(
-            app_module.client,
+            chat_client,
             "chat",
             MagicMock(return_value=mock_response),
         )
 
-        app_module.sessions[42] = [{"role": "user", "content": "first"}]
+        sessions[42] = [{"role": "user", "content": "first"}]
 
         resp = client.post("/chat", json={"session_id": 42, "message": "second"})
 
@@ -75,7 +76,7 @@ class TestChat:
     def test_chat_ollama_error_returns_500(self, client, monkeypatch):
         """If the Ollama client raises, the endpoint returns HTTP 500."""
         monkeypatch.setattr(
-            app_module.client,
+            chat_client,
             "chat",
             MagicMock(side_effect=RuntimeError("connection refused")),
         )
@@ -93,7 +94,7 @@ class TestGetSessions:
         assert resp.json() == []
 
     def test_sessions_returns_first_prompt_as_title(self, client):
-        app_module.sessions[7] = [
+        sessions[7] = [
             {"role": "user", "content": "What is AI?"},
             {"role": "assistant", "content": "AI stands for…"},
         ]
@@ -106,8 +107,8 @@ class TestGetSessions:
         assert data[0]["prompt"] == "What is AI?"
 
     def test_sessions_lists_multiple_sessions(self, client):
-        app_module.sessions[1] = [{"role": "user", "content": "msg1"}]
-        app_module.sessions[2] = [{"role": "user", "content": "msg2"}]
+        sessions[1] = [{"role": "user", "content": "msg1"}]
+        sessions[2] = [{"role": "user", "content": "msg2"}]
 
         resp = client.get("/sessions")
         assert resp.status_code == 200
@@ -116,7 +117,7 @@ class TestGetSessions:
 
 class TestGetSession:
     def test_returns_session_messages(self, client):
-        app_module.sessions[99] = [
+        sessions[99] = [
             {"role": "user", "content": "Hello"},
             {"role": "assistant", "content": "Hi there"},
         ]

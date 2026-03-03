@@ -1,36 +1,20 @@
 import json
-import os
 import random
 
-from fastapi import FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
-from ollama import Client, ChatResponse
-from data_models import ChatRequest, InternalChatResponse, Sessions, SessionTitle
-from log import logger
+from fastapi import APIRouter, HTTPException
+from ollama import ChatResponse
+
+from app.client import client
+from app.data_models import ChatRequest, InternalChatResponse, Sessions, SessionTitle
+from app.log import logger
+from app.storage import sessions
 
 MODEL = "llama3.2:3b"
 
-
-app = FastAPI(title="Chapka backend")
-
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# FIXME: Here should be AsyncClient but it doesn't work in Docker
-client = Client(
-    host=os.getenv("OLLAMA_HOST", "http://localhost:11434"),
-)
-
-sessions: dict[int, list[dict[str, str]]] = {}
+router = APIRouter()
 
 
-@app.post(
+@router.post(
     "/chat",
     response_model=InternalChatResponse,
 )
@@ -52,9 +36,7 @@ async def chat_with_model(request: ChatRequest):
     try:
         # TODO: It's wrong in general: We should not use synchronous call in async function
         #       We need it while the issue with Docker and AsyncClient is not resolved
-        response: ChatResponse = client.chat(
-            model=MODEL, messages=sessions[session_id]
-        )
+        response: ChatResponse = client.chat(model=MODEL, messages=sessions[session_id])
         llm_message = response.message
 
         sessions[session_id].append(json.loads(llm_message.model_dump_json()))
@@ -68,7 +50,7 @@ async def chat_with_model(request: ChatRequest):
         raise HTTPException(status_code=500, detail=f"Ollama error: {e}")
 
 
-@app.get(
+@router.get(
     "/sessions",
     response_model=list[SessionTitle],
 )
@@ -81,14 +63,8 @@ async def get_sessions():
     return history
 
 
-@app.get("/sessions/{session_id}", response_model=Sessions)
+@router.get("/sessions/{session_id}", response_model=Sessions)
 async def get_session(session_id: int):
     if session_id not in sessions:
         raise HTTPException(status_code=404, detail="Session not found")
     return {"session_id": session_id, "messages": sessions[session_id]}
-
-
-if __name__ == "__main__":
-    import uvicorn
-
-    uvicorn.run(app, host="0.0.0.0", port=8000)
