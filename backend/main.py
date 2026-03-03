@@ -27,7 +27,7 @@ client = AsyncClient(
     host=os.getenv("OLLAMA_HOST", "http://localhost:11434"),
 )
 
-sessions: Sessions = {}
+sessions: dict[int, list[dict[str, str]]] = {}
 
 
 @app.post(
