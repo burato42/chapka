@@ -24,6 +24,7 @@ node_modules/
 # next.js
 .next/
 /out/
+.swc/
 
 # production
 build
