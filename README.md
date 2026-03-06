@@ -6,7 +6,7 @@ It's a simple chat app that uses FastAPI and Ollama to generate responses.
 
 - FastAPI
 - Ollama
-- Next.js ([just because it was a prefered way of creating a new app](https://react.dev/learn/creating-a-react-app))
+- Next.js ([just because it was the prefered way of creating a new app](https://react.dev/learn/creating-a-react-app))
 - TypeScript
 - Tailwind CSS
 - Jest
